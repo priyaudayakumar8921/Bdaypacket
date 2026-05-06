@@ -227,9 +227,9 @@
         <div id="key-container" class="mb-12">
             <div id="magic-key" class="animate-bounce inline-block">🔑</div>
         </div>
-        <h2 id="key-text" class="text-5xl font-bold cinzel glow-text mb-4 opacity-0 uppercase">Key Gained</h2>
-        <p class="text-amber-400 tracking-widest uppercase text-sm mb-12 opacity-0" id="key-subtext">The path is clear...</p>
-        <button onclick="animateUnlockDoor()" id="unlock-trigger" class="px-12 py-4 bg-amber-600 rounded-full font-bold text-black uppercase tracking-widest hover:scale-105 transition-all opacity-0">Tap to Unlock</button>
+        <h2 id="key-text" class="text-5xl font-bold cinzel glow-text mb-4 uppercase">Key Gained</h2>
+        <p class="text-amber-400 tracking-widest uppercase text-sm mb-12" id="key-subtext">The path is clear...</p>
+        <button onclick="animateUnlockDoor()" id="unlock-trigger" class="px-12 py-4 bg-amber-600 rounded-full font-bold text-black uppercase tracking-widest hover:scale-105 transition-all">Tap to Unlock</button>
     </section>
 
     <!-- STATE: DOOR REVEAL -->
@@ -248,7 +248,7 @@
 
         <div id="door-message" class="mt-12 opacity-0 transform translate-y-10 w-full max-w-md pointer-events-none">
             <h3 id="door-title" class="text-3xl font-bold mb-4 cinzel glow-text">The Gate is Open!</h3>
-            <p id="reward-story" class="text-xl text-amber-400 font-bold mb-8 px-4 cinzel uppercase tracking-wide">ONLY 5 MOON TO GO</p>
+            <p id="reward-story" class="text-xl text-amber-400 font-bold mb-8 px-4 cinzel uppercase tracking-wide">ONLY 5 MOONS TO GO</p>
             <div class="flex flex-col gap-4 px-4 pointer-events-auto">
                 <a id="reward-link" href="#" target="_blank" class="w-full px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold rounded-full hover:scale-105 transition-all shadow-xl text-center">Watch Your Surprise 🎥</a>
                 <button id="personal-msg-btn" class="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-700 text-white font-bold rounded-full hover:scale-105 transition-all shadow-xl border border-white/20">MESSAGE FOR YOU 💌</button>
@@ -278,8 +278,10 @@
         lenis.on('scroll', ScrollTrigger.update);
         gsap.ticker.add((time) => { lenis.raf(time * 1000) });
 
-        const BIRTHDAY_DATE = new Date();
-        BIRTHDAY_DATE.setDate(BIRTHDAY_DATE.getDate() + 5);
+        // --- AUTOMATION SETUP ---
+        // Setting Birthday to May 18, 2026.
+        // Months are 0-indexed in JS (January is 0, May is 4).
+        const BIRTHDAY_DATE = new Date(2026, 4, 18); 
         
         const REEL_LINKS = [
             "https://i.ibb.co/Hpx8tFHt/file-00000000740072089e5e410e05fff834.png", // 5 Days Left
@@ -316,7 +318,8 @@
                 const overlay = document.getElementById('msg-overlay');
                 document.getElementById('personal-msg-text').innerHTML = PERSONAL_MESSAGES[currentActiveDay - 1];
                 overlay.classList.remove('hidden');
-                gsap.from(overlay.querySelector('div'), { scale: 0.8, opacity: 0, duration: 0.4 });
+                gsap.set(overlay.querySelector('div'), { scale: 0.8, opacity: 0 });
+                gsap.to(overlay.querySelector('div'), { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" });
             };
 
             window.addEventListener('resize', () => { drawConnections(); });
@@ -329,7 +332,12 @@
             container.innerHTML = '';
             const now = new Date();
             for (let i = 1; i <= 6; i++) {
-                const ud = new Date(BIRTHDAY_DATE); ud.setDate(ud.getDate() - (6 - i)); ud.setHours(0,0,0,0);
+                const ud = new Date(BIRTHDAY_DATE); 
+                // Node 1: Birthday - 5 days (May 13)
+                // Node 6: Birthday - 0 days (May 18)
+                ud.setDate(ud.getDate() - (6 - i)); 
+                ud.setHours(0,0,0,0);
+                
                 const isU = testMode || now >= ud || progress.daysCompleted.includes(i);
                 const isC = progress.daysCompleted.includes(i);
                 const alignClass = i % 2 === 0 ? 'self-end' : 'self-start';
@@ -344,7 +352,7 @@
                         <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-black border-2 border-amber-500">${isC ? '⭐' : nodeIcon}</div>
                         <div class="text-left">
                             <h4 class="text-lg font-bold cinzel">${nodeTitle}</h4>
-                            <p class="text-[10px] opacity-60">${isU ? 'Active Portal' : 'Unlocks ' + ud.toLocaleDateString()}</p>
+                            <p class="text-[10px] opacity-60">${isU ? 'Active Portal' : 'Unlocks ' + ud.toLocaleDateString('en-IN', {day: 'numeric', month: 'short'})}</p>
                         </div>
                     </div>
                     <div class="text-xl">${isC ? '✅' : isU ? '🔓' : '🔒'}</div>`;
@@ -569,6 +577,8 @@
                     <h2 class="text-5xl cinzel glow-text animate-bounce uppercase">HAPPY BIRTHDAY!</h2>
                     <p class="text-amber-400 text-xl italic mt-6">The magic is intensifying...</p>
                 `;
+                document.getElementById('magic-candle').onclick = null;
+                
                 setTimeout(() => {
                     gsap.to(c, { opacity: 0, duration: 0.5, onComplete: () => {
                         gsap.set(c, { opacity: 1 });
@@ -578,6 +588,7 @@
             };
 
             function showUltimateTrialInstructions() {
+                const c = document.getElementById('game-content');
                 c.innerHTML = `
                     <div class="text-center space-y-8 py-10">
                         <h2 class="text-4xl cinzel glow-text animate-pulse uppercase tracking-widest">The Ultimate Birthday Trial</h2>
@@ -623,8 +634,11 @@
 
         function showKeyGained(day) {
             currentActiveDay = day; const s = document.getElementById('key-gained-screen'); s.classList.remove('hidden');
+            const key = document.getElementById('magic-key');
+            gsap.set(key, { scale: 0, rotation: -45, opacity: 1 });
+            gsap.set(["#key-text", "#key-subtext", "#unlock-trigger"], { opacity: 0, y: 15 });
             const tl = gsap.timeline();
-            tl.fromTo("#magic-key", { scale: 0, rotation: -45 }, { scale: 1, rotation: 0, duration: 1, ease: "back.out(1.7)" })
+            tl.to(key, { scale: 1, rotation: 0, duration: 1, ease: "back.out(1.7)" })
               .to("#key-text", { opacity: 1, y: 0, duration: 0.5 }, "-=0.3")
               .to("#key-subtext", { opacity: 1, y: 0, duration: 0.5 }, "-=0.2")
               .to("#unlock-trigger", { opacity: 1, y: 0, duration: 0.5 }, "-=0.2");
@@ -635,7 +649,7 @@
             const kScreen = document.getElementById('key-gained-screen');
             const dScreen = document.getElementById('door-screen');
             dScreen.classList.remove('hidden'); dScreen.style.opacity = 0;
-            const tl = gsap.timeline({ onComplete: () => { kScreen.classList.add('hidden'); gsap.set(["#key-text", "#key-subtext", "#unlock-trigger"], { opacity: 0, y: 10 }); } });
+            const tl = gsap.timeline({ onComplete: () => { kScreen.classList.add('hidden'); } });
             
             const countdowns = [
                 "ONLY 5 MOONS TO GO",
