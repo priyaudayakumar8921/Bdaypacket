@@ -139,7 +139,6 @@
     <!-- STATE: LANDING -->
     <section id="landing-screen" class="relative h-[200vh] w-full overflow-hidden">
         <div class="fixed top-6 right-6 z-[100] flex flex-col gap-2">
-            <button onclick="toggleTestMode()" class="bg-red-600/20 hover:bg-red-600/40 border border-red-500/50 text-[10px] px-3 py-1 rounded-full uppercase tracking-tighter cinzel text-red-200 transition-all">Toggle Test Mode</button>
             <button onclick="clearAllProgress()" class="bg-white/5 hover:bg-white/10 border border-white/20 text-[10px] px-3 py-1 rounded-full uppercase tracking-tighter cinzel text-gray-400 transition-all">Reset Progress</button>
         </div>
 
@@ -149,7 +148,8 @@
         <div id="layer-castle" class="parallax-layer z-30" style="background: url('https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?auto=format&fit=crop&q=80&w=1920') no-repeat bottom; background-size: cover; filter: drop-shadow(0 0 20px rgba(0,0,0,1));"></div>
 
         <div class="fixed top-0 left-0 w-full h-screen flex flex-col items-center justify-center z-40 px-4 text-center pointer-events-none">
-            <h1 id="main-title" class="text-5xl md:text-8xl font-black mb-4 glow-text uppercase">5 Days To Magic ✨</h1>
+            <!-- Secret Trigger: Click this 5 times -->
+            <h1 id="main-title" class="text-5xl md:text-8xl font-black mb-4 glow-text uppercase pointer-events-auto cursor-pointer select-none">5 Days To Magic ✨</h1>
             <p id="main-subtitle" class="text-xl md:text-2xl opacity-80 tracking-widest cinzel">The journey begins now...</p>
             <div id="scroll-indicator" class="mt-20 animate-bounce">
                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
@@ -240,7 +240,6 @@
         gsap.ticker.add((time) => { lenis.raf(time * 1000) });
 
         // --- AUTOMATION: IST TIMEZONE ---
-        // Setting Birthday to May 18, 2026 IST
         const BIRTHDAY_DATE = new Date("2026-05-18T00:00:00+05:30"); 
         
         const REEL_LINKS = [
@@ -265,13 +264,44 @@
         let progress = JSON.parse(localStorage.getItem('magic_progress')) || { daysCompleted: [], keys: 0 };
         let currentActiveDay = 1;
         let timerInterval = null;
+        let secretClickCount = 0;
 
         function saveProgress() { localStorage.setItem('magic_progress', JSON.stringify(progress)); }
-        function toggleTestMode() { testMode = !testMode; document.getElementById('test-banner').classList.toggle('hidden', !testMode); renderMap(); }
-        function clearAllProgress() { if(confirm("Reset progress?")) { localStorage.removeItem('magic_progress'); progress = { daysCompleted: [], keys: 0 }; renderMap(); } }
+
+        // Updated toggle function
+        function toggleTestMode() { 
+            testMode = !testMode; 
+            const banner = document.getElementById('test-banner');
+            banner.classList.toggle('hidden', !testMode); 
+            renderMap();
+            if(testMode) {
+                confetti({ particleCount: 50, gravity: 0.5 });
+            }
+        }
+
+        function clearAllProgress() { 
+            if(confirm("Reset progress? This will lock completed levels.")) { 
+                localStorage.removeItem('magic_progress'); 
+                progress = { daysCompleted: [], keys: 0 }; 
+                renderMap(); 
+            } 
+        }
 
         window.onload = () => {
             initParticles(); setupParallax(); renderMap();
+            
+            // --- SECRET TRIGGER LOGIC ---
+            const mainTitle = document.getElementById('main-title');
+            mainTitle.addEventListener('click', () => {
+                secretClickCount++;
+                if (secretClickCount === 5) {
+                    toggleTestMode();
+                    secretClickCount = 0;
+                }
+                // Reset count if not clicked fast enough
+                setTimeout(() => { secretClickCount = 0; }, 3000);
+            });
+
             document.getElementById('personal-msg-btn').onclick = () => {
                 const overlay = document.getElementById('msg-overlay');
                 document.getElementById('personal-msg-text').innerHTML = PERSONAL_MESSAGES[currentActiveDay - 1];
@@ -290,7 +320,6 @@
             const now = new Date();
             
             for (let i = 1; i <= 6; i++) {
-                // Calculation: Node 1 is May 13, Node 6 is May 18.
                 const unlockDate = new Date(BIRTHDAY_DATE);
                 unlockDate.setDate(unlockDate.getDate() - (6 - i));
                 
@@ -339,6 +368,7 @@
             gsap.to(overlay.querySelector('div'), { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.2)" });
             
             updateTimer(targetDate);
+            clearInterval(timerInterval);
             timerInterval = setInterval(() => updateTimer(targetDate), 1000);
         }
 
@@ -397,7 +427,6 @@
             const container = document.getElementById('game-content');
             container.innerHTML = `<div class="text-center mb-6"><h3 class="text-2xl cinzel">Enchanted Harvest</h3><p class="text-amber-400">Score: <span id="score">0</span> / ${targetMatches}</p></div><div class="candy-grid mx-auto max-w-sm" id="candy-board"></div>`;
             const board = document.getElementById('candy-board');
-            let sel = null;
             function create() {
                 grid = []; board.innerHTML = '';
                 for (let i = 0; i < size * size; i++) {
@@ -405,19 +434,23 @@
                     grid.push(e);
                     const d = document.createElement('div'); d.className = 'candy-item'; d.textContent = e;
                     d.onclick = () => {
-                        if (sel === null) { sel = i; d.style.transform = 'scale(1.2)'; }
-                        else {
-                            const x1 = sel % size, y1 = Math.floor(sel / size), x2 = i % size, y2 = Math.floor(i / size);
-                            if (Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1) { 
-                                [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); 
-                                if (!check(true)) { setTimeout(() => { [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); }, 300); } 
-                            }
-                            board.children[sel].style.transform = ''; sel = null;
-                        }
+                        handleCandyClick(i, d);
                     };
                     board.appendChild(d);
                 }
                 check(false); 
+            }
+            let sel = null;
+            function handleCandyClick(i, d) {
+                if (sel === null) { sel = i; d.style.transform = 'scale(1.2)'; }
+                else {
+                    const x1 = sel % size, y1 = Math.floor(sel / size), x2 = i % size, y2 = Math.floor(i / size);
+                    if (Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1) { 
+                        [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); 
+                        if (!check(true)) { setTimeout(() => { [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); }, 300); } 
+                    }
+                    board.children[sel].style.transform = ''; sel = null;
+                }
             }
             function update() { grid.forEach((e, i) => { if(board.children[i]) board.children[i].textContent = e; }); }
             function check(isMove) {
@@ -479,7 +512,10 @@
                 document.getElementById('btn').onclick = () => {
                     if (document.getElementById('inp').value.toUpperCase().trim() === a.dec) {
                         currentIdx++;
-                        gsap.to(container, { opacity: 0, duration: 0.3, onComplete: () => { gsap.set(container, { opacity: 1 }); nextRound(); }});
+                        gsap.to(container, { opacity: 0, duration: 0.3, onComplete: () => {
+                            gsap.set(container, { opacity: 1 });
+                            nextRound();
+                        }});
                     } else { gsap.fromTo("#inp", { x: -10 }, { x: 10, duration: 0.1, repeat: 5, yoyo: true }); }
                 };
             }
