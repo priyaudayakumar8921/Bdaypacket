@@ -242,13 +242,14 @@
         // --- AUTOMATION: IST TIMEZONE ---
         const BIRTHDAY_DATE = new Date("2026-05-18T00:00:00+05:30"); 
         
+        // --- UPDATED SURPRISE LINKS ---
         const REEL_LINKS = [
-            "https://i.ibb.co/Hpx8tFHt/file-00000000740072089e5e410e05fff834.png",
-            "https://i.ibb.co/5WHG5D9L/IMG-20260506-113153.png",
-            "https://i.ibb.co/RTnGmh9x/IMG-20260506-123317.png",
-            "https://i.ibb.co/8gtq8JvL/1778063348894.png",
-            "https://i.ibb.co/LXSRm3Hb/1778062505925.png",
-            "https://i.ibb.co/0yjZYtFX/IMG-20260506-113242.png"
+            "https://i.ibb.co/W479dkJC/file-00000000740072089e5e410e05fff834.png", // 5 Days Left
+            "https://i.ibb.co/zh4wPNBt/IMG-20260506-113153.png", // 4 Days Left
+            "https://i.ibb.co/RTnGmh9x/IMG-20260506-123317.png", // 3 Days Left
+            "https://i.ibb.co/8gtq8JvL/1778063348894.png",         // 2 Days Left
+            "https://i.ibb.co/LXSRm3Hb/1778062505925.png",         // 1 Day Left
+            "https://i.ibb.co/4RDrDt9n/IMG-20260506-113242.png"  // Birthday Day
         ];
         
         const PERSONAL_MESSAGES = [
@@ -268,7 +269,6 @@
 
         function saveProgress() { localStorage.setItem('magic_progress', JSON.stringify(progress)); }
 
-        // Updated toggle function
         function toggleTestMode() { 
             testMode = !testMode; 
             const banner = document.getElementById('test-banner');
@@ -290,7 +290,7 @@
         window.onload = () => {
             initParticles(); setupParallax(); renderMap();
             
-            // --- SECRET TRIGGER LOGIC ---
+            // Secret Trigger
             const mainTitle = document.getElementById('main-title');
             mainTitle.addEventListener('click', () => {
                 secretClickCount++;
@@ -298,7 +298,6 @@
                     toggleTestMode();
                     secretClickCount = 0;
                 }
-                // Reset count if not clicked fast enough
                 setTimeout(() => { secretClickCount = 0; }, 3000);
             });
 
@@ -318,55 +317,31 @@
             const container = document.getElementById('nodes-container');
             container.innerHTML = '';
             const now = new Date();
-            
             for (let i = 1; i <= 6; i++) {
                 const unlockDate = new Date(BIRTHDAY_DATE);
                 unlockDate.setDate(unlockDate.getDate() - (6 - i));
-                
                 const isU = testMode || now >= unlockDate || progress.daysCompleted.includes(i);
                 const isC = progress.daysCompleted.includes(i);
                 const alignClass = i % 2 === 0 ? 'self-end' : 'self-start';
-                
                 const node = document.createElement('div');
                 node.id = `node-${i}`;
                 node.className = `map-node flex items-center justify-between w-[85%] p-5 rounded-2xl border-2 transition-all cursor-pointer ${alignClass} ${isU ? 'border-amber-500 bg-amber-900/20 node-glow' : 'locked border-gray-700 bg-gray-900'}`;
-                
                 const daysLeft = (6-i);
                 const nodeTitle = daysLeft === 0 ? "BIRTHDAY" : `${daysLeft} Days Left`;
-                
-                node.innerHTML = `
-                    <div class="flex items-center gap-5">
-                        <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-black border-2 border-amber-500">
-                            ${isC ? '⭐' : i === 6 ? '🎂' : '✨'}
-                        </div>
-                        <div class="text-left">
-                            <h4 class="text-lg font-bold cinzel">${nodeTitle}</h4>
-                            <p class="text-[10px] opacity-60">${isU ? 'Portal Active' : 'Starts ' + unlockDate.toLocaleDateString('en-IN', {day: 'numeric', month: 'short'})}</p>
-                        </div>
-                    </div>
-                    <div class="text-xl">${isC ? '✅' : isU ? '🔓' : '🔒'}</div>`;
-                
-                if (isU) {
-                    node.onclick = () => startDay(i);
-                } else {
-                    node.onclick = () => showTimer(unlockDate, nodeTitle);
-                }
-                
+                node.innerHTML = `<div class="flex items-center gap-5"><div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-black border-2 border-amber-500">${isC ? '⭐' : i === 6 ? '🎂' : '✨'}</div><div class="text-left"><h4 class="text-lg font-bold cinzel">${nodeTitle}</h4><p class="text-[10px] opacity-60">${isU ? 'Portal Active' : 'Starts ' + unlockDate.toLocaleDateString('en-IN', {day: 'numeric', month: 'short'})}</p></div></div><div class="text-xl">${isC ? '✅' : isU ? '🔓' : '🔒'}</div>`;
+                if (isU) node.onclick = () => startDay(i);
+                else node.onclick = () => showTimer(unlockDate, nodeTitle);
                 container.appendChild(node);
             }
             setTimeout(drawConnections, 100);
         }
 
-        // --- TIMER POPUP LOGIC ---
         function showTimer(targetDate, name) {
             const overlay = document.getElementById('timer-overlay');
-            const targetName = document.getElementById('timer-target-name');
-            targetName.textContent = `${name} Unlocks In:`;
-            
+            document.getElementById('timer-target-name').textContent = `${name} Unlocks In:`;
             overlay.classList.remove('hidden');
             gsap.set(overlay.querySelector('div'), { scale: 0.8, opacity: 0 });
             gsap.to(overlay.querySelector('div'), { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.2)" });
-            
             updateTimer(targetDate);
             clearInterval(timerInterval);
             timerInterval = setInterval(() => updateTimer(targetDate), 1000);
@@ -375,18 +350,11 @@
         function updateTimer(targetDate) {
             const now = new Date();
             const diff = targetDate - now;
-            
-            if (diff <= 0) {
-                closeTimer();
-                renderMap();
-                return;
-            }
-            
+            if (diff <= 0) { closeTimer(); renderMap(); return; }
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const secs = Math.floor((diff % (1000 * 60)) / 1000);
-            
             document.getElementById('t-days').textContent = days.toString().padStart(2, '0');
             document.getElementById('t-hours').textContent = hours.toString().padStart(2, '0');
             document.getElementById('t-mins').textContent = mins.toString().padStart(2, '0');
@@ -427,30 +395,23 @@
             const container = document.getElementById('game-content');
             container.innerHTML = `<div class="text-center mb-6"><h3 class="text-2xl cinzel">Enchanted Harvest</h3><p class="text-amber-400">Score: <span id="score">0</span> / ${targetMatches}</p></div><div class="candy-grid mx-auto max-w-sm" id="candy-board"></div>`;
             const board = document.getElementById('candy-board');
+            let sel = null;
             function create() {
                 grid = []; board.innerHTML = '';
                 for (let i = 0; i < size * size; i++) {
-                    const e = emojis[Math.floor(Math.random() * emojis.length)];
-                    grid.push(e);
+                    const e = emojis[Math.floor(Math.random() * emojis.length)]; grid.push(e);
                     const d = document.createElement('div'); d.className = 'candy-item'; d.textContent = e;
                     d.onclick = () => {
-                        handleCandyClick(i, d);
+                        if (sel === null) { sel = i; d.style.transform = 'scale(1.2)'; }
+                        else {
+                            const x1 = sel % size, y1 = Math.floor(sel / size), x2 = i % size, y2 = Math.floor(i / size);
+                            if (Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1) { [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); if (!check(true)) { setTimeout(() => { [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); }, 300); } }
+                            board.children[sel].style.transform = ''; sel = null;
+                        }
                     };
                     board.appendChild(d);
                 }
                 check(false); 
-            }
-            let sel = null;
-            function handleCandyClick(i, d) {
-                if (sel === null) { sel = i; d.style.transform = 'scale(1.2)'; }
-                else {
-                    const x1 = sel % size, y1 = Math.floor(sel / size), x2 = i % size, y2 = Math.floor(i / size);
-                    if (Math.abs(x1 - x2) + Math.abs(y1 - y2) === 1) { 
-                        [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); 
-                        if (!check(true)) { setTimeout(() => { [grid[sel], grid[i]] = [grid[i], grid[sel]]; update(); }, 300); } 
-                    }
-                    board.children[sel].style.transform = ''; sel = null;
-                }
             }
             function update() { grid.forEach((e, i) => { if(board.children[i]) board.children[i].textContent = e; }); }
             function check(isMove) {
@@ -483,7 +444,7 @@
             const icons = ['🧙‍♂️', '🐉', '🦄', '💎', '🕯️', '🧪', '📜', '🏰', '🦉', '🔮', '⚔️', '🛡️', '👑', '🔥', '💧', '🌿', '🌙', '☀️'];
             const pc = isHard ? 18 : 8;
             let deck = [...icons.slice(0, pc), ...icons.slice(0, pc)].sort(() => Math.random() - 0.5);
-            container.innerHTML = `<div class="text-center mb-4"><h3 class="text-xl cinzel">Memory Trial</h3><p class="text-xs text-amber-500">Match all pairs</p></div><div class="memory-grid ${isHard ? 'memory-grid-hard' : ''}" id="board"></div>`;
+            container.innerHTML = `<div class="text-center mb-4"><h3 class="text-xl cinzel">Memory Trial</h3></div><div class="memory-grid ${isHard ? 'memory-grid-hard' : ''}" id="board"></div>`;
             const board = document.getElementById('board');
             let flp = [], solved = 0;
             deck.forEach(icon => {
@@ -512,10 +473,7 @@
                 document.getElementById('btn').onclick = () => {
                     if (document.getElementById('inp').value.toUpperCase().trim() === a.dec) {
                         currentIdx++;
-                        gsap.to(container, { opacity: 0, duration: 0.3, onComplete: () => {
-                            gsap.set(container, { opacity: 1 });
-                            nextRound();
-                        }});
+                        gsap.to(container, { opacity: 0, duration: 0.3, onComplete: () => { gsap.set(container, { opacity: 1 }); nextRound(); }});
                     } else { gsap.fromTo("#inp", { x: -10 }, { x: 10, duration: 0.1, repeat: 5, yoyo: true }); }
                 };
             }
@@ -571,7 +529,7 @@
         function setupDay5() {
             const content = document.getElementById('game-content');
             gsap.set(content, { opacity: 1 });
-            content.innerHTML = `<div class="text-center space-y-6"><h2 class="text-3xl cinzel glow-text">The Triple Trial</h2><p class="text-amber-400 italic">One day remains. Complete all tasks to reach the birthday moon.</p><div class="animate-bounce text-4xl">🌕</div></div>`;
+            content.innerHTML = `<div class="text-center space-y-6"><h2 class="text-3xl cinzel glow-text">The Triple Trial</h2><p class="text-amber-400 italic">Complete all tasks to reach the moon.</p></div>`;
             setTimeout(() => {
                 setupCandyCrush(15, () => {
                     gsap.to(content, { opacity: 0, duration: 0.5, onComplete: () => {
@@ -584,7 +542,7 @@
                         });
                     }});
                 });
-            }, 2500);
+            }, 1500);
         }
 
         function setupDay6() {
